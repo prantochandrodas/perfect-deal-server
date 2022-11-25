@@ -16,71 +16,80 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-const verifyAdmin =async(req,res,next)=>{
+const verifyAdmin = async (req, res, next) => {
     // console.log('inside verify admin ',req.decoded.email);
-    const decodedEmail=req.decoded.email;
-    const query={email:decodedEmail};
-    const user=await usersCollection.findOne(query);
-    if(user?.role !== "admin"){
-        return res.status(403).send({message:'frobidden access'})
+    const decodedEmail = req.decoded.email;
+    const query = { email: decodedEmail };
+    const user = await usersCollection.findOne(query);
+    if (user?.role !== "admin") {
+        return res.status(403).send({ message: 'frobidden access' })
     }
     next();
- } 
-async function run(){
-    try{
+}
+async function run() {
+    try {
 
         //JWT
-        app.get('/jwt',async(req,res)=>{
-            const email=req.query.email;
-            const query={
-                email:email
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
             }
-            const user=await userCollection.findOne(query);
-            if(user && user.email){
+            const user = await userCollection.findOne(query);
+            if (user && user.email) {
                 const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
                 return res.send({ accessToken: token });
             }
-            res.send({accessToken:''});
+            res.send({ accessToken: '' });
         });
 
         // get category data
-        const productCategoryCollection=client.db('PerfectDealDb').collection('ProductCategoryCollection');
-        const userCollection=client.db('PerfectDealDb').collection('usersCollection');
-        const allProductsCollection=client.db('PerfectDealDb').collection('allProductsCollection');
-        app.get('/productCategorys',async(req,res)=>{
-            const query={};
-            const result= await productCategoryCollection.find(query).toArray();
+        const productCategoryCollection = client.db('PerfectDealDb').collection('ProductCategoryCollection');
+        const userCollection = client.db('PerfectDealDb').collection('usersCollection');
+        const allProductsCollection = client.db('PerfectDealDb').collection('allProductsCollection');
+        const bookingCollection = client.db('PerfectDealDb').collection('bookingCollection');
+        app.get('/productCategorys', async (req, res) => {
+            const query = {};
+            const result = await productCategoryCollection.find(query).toArray();
             res.send(result);
         });
-        
+
         // add user
-        app.post('/users',async(req,res)=>{
-            const users=req.body;
-            const result=await userCollection.insertOne(users);
+        app.post('/users', async (req, res) => {
+            const users = req.body;
+            const result = await userCollection.insertOne(users);
             res.send(result);
         });
 
         // all products
-        app.get('/products/:id',async(req,res)=>{
-            const id =req.params.id;
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
             // console.log(id);
-            const query={category_id:(id)}
-            const result= await allProductsCollection.find(query).toArray();
+            const query = { category_id: (id) }
+            const result = await allProductsCollection.find(query).toArray();
             res.send(result);
         });
 
-        // app.get('/bookings/:id',async(req,res)=>{
-        //     const id =req.params.id;
-        //     const query={_id:ObjectId(id)}
-        //     const result= await bookingCollection.findOne(query);
-        //     res.send(result);
-        // });
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingCollection.insertOne(booking);
+            res.send(result);
 
-    }finally{
+        });
+
+        // get my oders
+        app.get('/myorder',async(req,res)=>{
+            const email=req.query.email;
+            const query={email:email}
+            const result=await bookingCollection.find(query).toArray();
+            res.send(result);
+        })
+
+    } finally {
 
     }
-}   
-run().catch(error=>console.log(error));
+}
+run().catch(error => console.log(error));
 
 
 
