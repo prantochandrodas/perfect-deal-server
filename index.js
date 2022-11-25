@@ -17,7 +17,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 const verifyAdmin =async(req,res,next)=>{
-    console.log('inside verify admin ',req.decoded.email);
+    // console.log('inside verify admin ',req.decoded.email);
     const decodedEmail=req.decoded.email;
     const query={email:decodedEmail};
     const user=await usersCollection.findOne(query);
@@ -46,6 +46,7 @@ async function run(){
         // get category data
         const productCategoryCollection=client.db('PerfectDealDb').collection('ProductCategoryCollection');
         const userCollection=client.db('PerfectDealDb').collection('usersCollection');
+        const allProductsCollection=client.db('PerfectDealDb').collection('allProductsCollection');
         app.get('/productCategorys',async(req,res)=>{
             const query={};
             const result= await productCategoryCollection.find(query).toArray();
@@ -59,7 +60,21 @@ async function run(){
             res.send(result);
         });
 
+        // all products
+        app.get('/products/:id',async(req,res)=>{
+            const id =req.params.id;
+            // console.log(id);
+            const query={category_id:(id)}
+            const result= await allProductsCollection.find(query).toArray();
+            res.send(result);
+        });
 
+        // app.get('/bookings/:id',async(req,res)=>{
+        //     const id =req.params.id;
+        //     const query={_id:ObjectId(id)}
+        //     const result= await bookingCollection.findOne(query);
+        //     res.send(result);
+        // });
 
     }finally{
 
