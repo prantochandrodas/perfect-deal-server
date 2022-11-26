@@ -91,6 +91,13 @@ async function run() {
             const result=await userCollection.find(query).toArray();
             res.send(result);
         });
+
+        // all sellers
+        app.get('/allSellers',async(req,res)=>{
+            const query={ role:'seller'};
+            const result=await userCollection.find(query).toArray();
+            res.send(result);
+        });
         // delete a user
         app.delete('/users/:id',async(req,res)=>{
             const id=req.params.id;
