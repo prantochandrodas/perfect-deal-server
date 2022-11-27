@@ -136,6 +136,14 @@ async function run() {
         //     res.send(result);
         // });
 
+//get all seller product
+        app.get('/products',async(req,res)=>{
+            const selleremail=req.query.email;
+            console.log(selleremail);
+            const query={email: selleremail};
+            const result=await allProductsCollection.find(query).toArray();
+            res.send(result);
+        });
 
         app.post('/addProduct',async(req,res)=>{
             const product=req.body;
