@@ -85,6 +85,14 @@ async function run() {
             const user=await userCollection.findOne(query);
             res.send({isAdmin:user?.role==='admin'});
         });
+
+        // is user is seller
+        app.get('/user/seller/:email',async(req,res)=>{
+            const email=req.params.email;
+            const query={email};
+            const user=await userCollection.findOne(query);
+            res.send({isSeller:user?.role==='seller'});
+        });
         // get all users
         app.get('/allUsers',async(req,res)=>{
             const query={ role:'buyer'};
@@ -115,6 +123,20 @@ async function run() {
             res.send(result);
         });
 
+        // add email
+        //  app.get('/addEmail',async(req,res)=>{
+        //     const filter={};
+        //     const option = {upsert:true}
+        //     const updatedDoc={
+        //         $set:{
+        //             email: 'sagor@gmail.com'
+        //         }
+        //     }
+        //     const result = await allProductsCollection.updateMany(filter,updatedDoc,option);
+        //     res.send(result);
+        // });
+
+
         app.post('/addProduct',async(req,res)=>{
             const product=req.body;
             const result=await allProductsCollection.insertOne(product);
@@ -130,14 +152,14 @@ async function run() {
 
         // get my oders
         app.get('/myorder',async(req,res)=>{
-            const email=req.query.email;
             // const decodedEmail=req.decoded.email;
             // if(email !== decodedEmail){
-            //     return res.status(403).send({message:'forbidden access'});
-            // }
-
-            // console.log('token', req.headers.authorization);
-            const query={email:email}
+                //     return res.status(403).send({message:'forbidden access'});
+                // }
+                
+                // console.log('token', req.headers.authorization);
+                const email=req.query.email;
+                const query={email:email}
             const result=await bookingCollection.find(query).toArray();
             res.send(result);
         })
