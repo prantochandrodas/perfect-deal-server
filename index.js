@@ -20,6 +20,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
+    console.log(authHeader);
     if (!authHeader) {
         return res.status(401).send('unauthorized access');
     }
@@ -59,6 +60,7 @@ async function run() {
         const bookingCollection = client.db('PerfectDealDb').collection('bookingCollection');
         const paymentCollection = client.db('PerfectDealDb').collection('paymentCollection');
         const wishListCollection = client.db('PerfectDealDb').collection('wishListCollection');
+        const advertiseCollection = client.db('PerfectDealDb').collection('advertiseCollection');
         app.get('/productCategorys', async (req, res) => {
             const query = {};
             const result = await productCategoryCollection.find(query).toArray();
@@ -139,7 +141,7 @@ async function run() {
         });
 
         // all sellers
-        app.get('/allSellers', verifyJWT, verifyAdmin, async (req, res) => {
+        app.get('/allSellers', verifyJWT, async (req, res) => {
             const query = { role: 'seller' };
             const result = await userCollection.find(query).toArray();
             res.send(result);
@@ -203,7 +205,9 @@ async function run() {
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
             // console.log(id);
-            const query = { category_id: (id) }
+            const query = { category_id: (id),
+                paid:false
+            }
             const result = await allProductsCollection.find(query).toArray();
             res.send(result);
         });
@@ -211,26 +215,59 @@ async function run() {
        
 
         // get all seller product
-        app.get('/products', verifyJWT, verifySeller, async (req, res) => {
+        app.get('/myproducts', verifyJWT,verifySeller, async (req, res) => {
             const selleremail = req.query.email;
             console.log(selleremail);
             const query = { email: selleremail };
             const result = await allProductsCollection.find(query).toArray();
             res.send(result);
         });
+
+
+        // add advertisecollection 
+        app.put('/advertise/:id',verifyJWT,verifySeller,async(req,res)=>{
+            const id=req.params.id;
+            const filter={_id:ObjectId(id)};
+            const option = { upsert: true }
+                const updatedDoc = {
+                    $set: {
+                        advertise: true
+                    }
+                }
+            
+            const result=await allProductsCollection.updateOne(filter,updatedDoc,option);
+            res.send(result);
+        });
+
         // delete my product
 
-        app.get('/allProduct/advetrise', verifyJWT, async (req, res) => {
-            const query = { paid: false };
+        app.get('/allProduct/advetrise', async (req, res) => {
+            const query = { advertise: true ,
+                paid:false
+            };
             const result = await allProductsCollection.find(query).toArray();
             res.send(result);
         });
 
 
+        // demo for update some data 
+
+        // app.get('/add',async(req,res)=>{
+        //     const filter={};
+        //     const option = { upsert: true }
+        //     const updatedDoc = {
+        //         $set: {
+        //             advertise: false
+        //         }
+        //     }
+        //     const result = await allProductsCollection.updateMany(filter, updatedDoc, option);
+        //     res.send(result);
+        // }); 
 
 
 
-        app.delete('/products/:id', verifyJWT,verifySeller,async (req, res) => {
+
+        app.delete('/myproducts/:id', verifyJWT,verifySeller,async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await allProductsCollection.deleteOne(query);
@@ -260,6 +297,7 @@ async function run() {
             const paymentIntent = await stripe.paymentIntents.create({
                 currency: 'usd',
                 amount: amount,
+             
                 // order_id:order_id,
                 "payment_method_types": [
                     "card"
@@ -277,8 +315,9 @@ async function run() {
             const id = payment.bookingId;
             const filter = { _id: ObjectId(id) };
             const order_id = payment.order_id;
+            console.log(order_id);
             const newFilter = { _id: ObjectId(order_id) };
-            const option = { upsert: true }
+            const option = { upsert: true };
             const updatedDoc = {
                 $set: {
                     paid: true,
@@ -302,7 +341,7 @@ async function run() {
 
         // get my oders
         app.get('/myorder', verifyJWT, async (req, res) => {
-            console.log('token', req.headers.authorization);
+            // console.log('token', req.headers.authorization);
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
 
@@ -320,11 +359,17 @@ async function run() {
         // my wishList
             app.post('/wishlist',verifyJWT,async(req,res)=>{
                 const wishList=req.body;
-                console.log(wishList);
+                // console.log(wishList);
                 const result=await wishListCollection.insertOne(wishList);
                 res.send(result);
             });
-
+        // get user wishlist data
+        app.get('/wishlists',verifyJWT,async(req,res)=>{
+            const email=req.query.email;
+            const query={email:email}
+            const result=await wishListCollection.find(query).toArray();
+            res.send(result);
+        });
 
         // 
 
